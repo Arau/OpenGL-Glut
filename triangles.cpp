@@ -5,9 +5,20 @@
 using namespace std;
 
 void drawTriangle(void) {
-        glVertex3f(-1, -1, 0);
-        glVertex3f( 1, -1, 0);
+        glVertex3f(-0.5, -0.5, 0);
+        glVertex3f( 0.5, -0.5, 0);
         glVertex3f( 0,  0, 0);
+}
+
+///////////////
+// Callbacks //
+///////////////
+
+void onChangeWindowSize(int width, int height) {
+    if (width >  height) 
+        glViewport((width/2) - (height/2), 0, height, height);    
+    else 
+        glViewport(0, (height/2) - (width/2), width, width);                     
 }
 
 void renderScene() {
@@ -18,6 +29,10 @@ void renderScene() {
     glutSwapBuffers();
 }
 
+/////////////////
+// End Callbacks
+/////////////////
+
 int main(int argc, char **argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
@@ -26,6 +41,7 @@ int main(int argc, char **argv) {
 
     //Callbacks
     glutDisplayFunc(renderScene);
+    glutReshapeFunc(onChangeWindowSize);
     glutMainLoop();
     return 0;
 }
