@@ -26,4 +26,6 @@ int main(int argc, char **argv) {
 
     //Callbacks
     glutDisplayFunc(renderScene);
+    glutMainLoop();
+    return 0;
 }
