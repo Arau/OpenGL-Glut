@@ -18,26 +18,26 @@ void defineColor() {
 void moveColors(int x, int y) {
     //Moving right
     if (x > xPast and x < xWindow) {
-        if (red   < 1.0) red   += 0.01;
-        if (green < 1.0) green += 0.02;
-        if (blue  < 1.0) blue  += 0.01;    
+        if (red   < 1.0) red   += 0.005;
+        if (green < 1.0) green += 0.009;
+        if (blue  < 1.0) blue  += 0.005;    
     } // Moving left
     else if (x < xPast and x > 0) {
-        if (red   > 0.0) red   -= 0.01;
-        if (green > 0.0) green -= 0.02;
-        if (blue  > 0.0) blue  -= 0.01;    
+        if (red   > 0.0) red   -= 0.005;
+        if (green > 0.0) green -= 0.009;
+        if (blue  > 0.0) blue  -= 0.005;    
     }
     
     // Moving up
     if (y > yPast and y < yWindow) {
-        if (red   < 1.0) red   += 0.02;
-        if (green < 1.0) green += 0.01;
-        if (blue  < 1.0) blue  += 0.01;    
+        if (red   < 1.0) red   += 0.009;
+        if (green < 1.0) green += 0.005;
+        if (blue  < 1.0) blue  += 0.006;    
     } // Moving down
     else if (y < yPast and y > 0) {
-        if (red   > 0.0) red   -= 0.02;
-        if (green > 0.0) green -= 0.01;
-        if (blue  > 0.0) blue  -= 0.01;        
+        if (red   > 0.0) red   -= 0.009;
+        if (green > 0.0) green -= 0.005;
+        if (blue  > 0.0) blue  -= 0.005;        
     }
     
     // Update globals
@@ -47,9 +47,14 @@ void moveColors(int x, int y) {
 
 void drawTriangle(void) {
     glBegin(GL_TRIANGLES);
+        
         glColor3f(red, green, blue);
         glVertex3f(-0.8, -0.8, 0);
+        
+        glColor3f(green, blue, red);
         glVertex3f( 0.8, -0.8, 0);
+        
+        glColor3f(blue, red, green);        
         glVertex3f( 0,  1, 0);
     glEnd();
 }
@@ -157,7 +162,7 @@ void onChangeWindowSize(int width, int height) {
 }
 
 void renderScene() {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);    
     if (mode == 0) {        
         drawTriangle();        
     }
