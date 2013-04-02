@@ -65,7 +65,12 @@ void drawWireCube() {
     glPopMatrix();
 }
 
-void drawTeapot() {}
+void drawTeapot() {
+    glPushMatrix();         
+        glColor3f(red, green, blue);        
+        glutWireTeapot(0.6);
+    glPopMatrix();
+}
 
 void drawSierpinskiCube() {}
 
