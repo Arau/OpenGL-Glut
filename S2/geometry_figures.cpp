@@ -141,6 +141,21 @@ void onKey(unsigned char key, int x, int y) {
     switch (key) {
         case 'h':
             cout << "press ESC to exit" << endl;
+            cout << "0 -> No color"     << endl;
+            cout << "1 -> Color mode"   << endl; 
+            
+            cout << endl;
+            
+            cout << "x -> Rotate for X" << endl;
+            cout << "y -> Rotate for Y" << endl;
+            cout << "z -> Rotate for Z" << endl;            
+            
+            cout << endl;
+            
+            cout << "t -> Triangle"     << endl;
+            cout << "c -> Cube"         << endl;
+            cout << "p -> Teapot"       << endl;
+            cout << "r -> Tetrahedron"     << endl;
             break;
         case 27:        // ascii 27 == ESC
             exit(0); 
@@ -162,7 +177,22 @@ void onKey(unsigned char key, int x, int y) {
             break;
         case 'r':      // Tetrahedron
             mode = 3;
-            break;         
+            break;   
+        case 'x':
+            xRot = 1;
+            yRot = 0;
+            zRot = 0;            
+            break;
+        case 'y':
+            xRot = 0;
+            yRot = 1;
+            zRot = 0;
+            break;
+        case 'z':
+            xRot = 0;
+            yRot = 0;
+            zRot = 1;
+            break;
     }
     glutPostRedisplay();
 }
