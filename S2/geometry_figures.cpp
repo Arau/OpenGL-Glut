@@ -72,7 +72,12 @@ void drawTeapot() {
     glPopMatrix();
 }
 
-void drawSierpinskiCube() {}
+void drawTetrahedron() {
+    glPushMatrix();         
+        glColor3f(red, green, blue);        
+        glutWireTetrahedron();
+    glPopMatrix();
+}
 
 ///////////////
 //  Inits  ////
@@ -175,7 +180,7 @@ void renderScene() {
         drawTeapot();
     }
     else if (mode == 3) {        
-        drawSierpinskiCube();
+        drawTetrahedron();
     }
     
     glutSwapBuffers();
