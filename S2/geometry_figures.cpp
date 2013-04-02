@@ -6,7 +6,8 @@ using namespace std;
 
 float red, green, blue;
 int xWindow, yWindow, xPast, yPast;
-int mode, vertex;
+int mode, color;
+int angle, xRot, yRot, zRot;
 
 void defineColor() {
     red   = 0.1;
@@ -44,6 +45,23 @@ void moveColors(int x, int y) {
 }
 
 
+void drawAxes() {           
+        glBegin(GL_LINES);
+                glColor3f(1, 0, 0);        
+                glVertex3i(  0, 0, 0);
+                glVertex3i( 10, 0, 0);
+                
+                glColor3f(0, 1, 0);
+                glVertex3i( 0,  0, 0);
+                glVertex3i( 0, 10, 0);
+                
+                glColor3f(1, 1, 1);
+                glVertex3i( 0, 0,  0);
+                glVertex3i( 0, 0, 10);
+        glEnd();        
+}
+
+
 void drawTriangle(void) {
     glBegin(GL_TRIANGLES);
         
@@ -59,16 +77,17 @@ void drawTriangle(void) {
 }
 
 void drawWireCube() {
-    glPushMatrix();         
+    glPushMatrix();                 
         glColor3f(red, green, blue);        
         glutWireCube(1.0);
     glPopMatrix();
 }
 
-void drawTeapot() {
-    glPushMatrix();         
+void drawTeapot() {    
+    glPushMatrix();                         
+        glRotated(angle, xRot, yRot, zRot);
         glColor3f(red, green, blue);        
-        glutWireTeapot(0.6);
+        glutWireTeapot(0.5);
     glPopMatrix();
 }
 
@@ -86,8 +105,7 @@ void drawTetrahedron() {
 void initGlobals() {        
     xWindow = 600;
     yWindow = 600;
-    mode    = 0;
-    vertex  = 0;    
+    mode    = 2;    
 }
 
 void initGlut() {        
@@ -97,9 +115,18 @@ void initGlut() {
 }
 
 void initColors() {
+    color   = 0;
     red     = 1.0f;
     green   = 1.0f;
     blue    = 1.0f;
+}
+
+void initAngle() {
+    angle = 0;
+    xRot  = 0;
+    yRot  = 1;
+    xRot  = 0;
+    
 }
 
 ///////////////
@@ -115,9 +142,15 @@ void onKey(unsigned char key, int x, int y) {
         case 'h':
             cout << "press ESC to exit" << endl;
             break;
-        case 27: // ascii 27 == ESC
+        case 27:        // ascii 27 == ESC
             exit(0); 
             break;
+        case '0':
+            color = 0;
+            break;
+        case '1':
+            color = 1;
+            break;        
         case 't':      // Triangle
             mode = 0; 
             break;        
@@ -127,24 +160,33 @@ void onKey(unsigned char key, int x, int y) {
         case 'p':      // Teapot
             mode = 2;
             break;
-        case 's':      // Sierpinski
+        case 'r':      // Tetrahedron
             mode = 3;
             break;         
     }
     glutPostRedisplay();
 }
 
-void onMouseMove(int x, int y) {            
-    if (mode == 0) 
+void onMouseMove(int x, int y) {                
+    if (color) 
         moveColors(x,y);
-           
+    
+    if (angle >= 360) 
+        angle = 0;
+    
+    if (x > xPast)  
+        angle += 2;
+    else 
+        angle -= 2;            
+    
+    xPast = x; yPast = y;
     glutPostRedisplay();
 }
 
 void onMouseClick(int button, int event, int x, int y) {    
     if (event == GLUT_DOWN) {
         // Color Mode
-        if (mode == 0) {
+        if (color == 1) {
             defineColor();
             
             // Update globals
@@ -170,10 +212,13 @@ void onChangeWindowSize(int width, int height) {
 
 void renderScene() {
     glClear(GL_COLOR_BUFFER_BIT);    
+    
+    drawAxes();
+    
     if (mode == 0) {        
         drawTriangle();        
     }
-    else if (mode == 1) {        
+    else if (mode == 1) {                
         drawWireCube();
     }
     else if (mode == 2) {        
@@ -196,6 +241,7 @@ int main(int argc, char **argv) {
     initGlobals();
     initGlut();
     initColors();
+    initAngle();
     
     //Callbacks
     glutDisplayFunc(renderScene);
