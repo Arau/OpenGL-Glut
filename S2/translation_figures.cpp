@@ -7,7 +7,7 @@ using namespace std;
 float red, green, blue;
 int xWindow, yWindow, xPast, yPast;
 int mode, color;
-double xTrans, yTrans, zTrans;
+double angle, xTrans, yTrans, zTrans;
 
 void defineColor() {
     red   = 0.1;
@@ -63,7 +63,9 @@ void drawAxes() {
 
 void drawTeapot() {        
     glPushMatrix();                         
-        glTranslated(xTrans, yTrans, zTrans);
+        glTranslated(xTrans, yTrans, zTrans);        
+        glScaled(0.5, 0.5, 0.5); 
+        glRotated(angle, 0, 1, 0);
         glColor3f(red, green, blue);        
         glutWireTeapot(0.5);
     glPopMatrix();
@@ -143,17 +145,24 @@ void onMouseClick(int button, int event, int x, int y) {
             defineColor();                        
         }     
         
-        if (x > (xWindow/2))  
-            xTrans += 0.2;
-        
-        else 
-            xTrans -= 0.2;            
-        
+        if (x > (xWindow/2)) {
+            xTrans += 0.02;
+            angle += 25;
+        }        
+        else {
+            xTrans -= 0.02;            
+            angle -= 25;
+        }
         if (y > (yWindow/2)) 
-            yTrans -= 0.2;        
+            yTrans -= 0.02;
         
         else 
-            yTrans += 0.2;                   
+            yTrans += 0.02;
+        
+        if (angle == 360) 
+            angle = 0;
+        
+        
     }            
     
     // Update globals
