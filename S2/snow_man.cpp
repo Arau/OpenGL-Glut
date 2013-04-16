@@ -5,8 +5,10 @@
 using namespace std;
 
 float red, green, blue;
+float xSize, ySize, zSize;
 int xWindow, yWindow, xPast, yPast;
 int angle, xRot, yRot, zRot;
+int mode = 0;
 
 void drawAxes() {           
         glBegin(GL_LINES);
@@ -26,22 +28,25 @@ void drawAxes() {
 
 void drawSnowMan()  {    
     // Body
+    
     glRotated(angle, 0, 1, 0);
+    if (mode == 1)
+        glScaled(xSize, ySize, zSize);
     
     glPushMatrix();              
-        glRotated(90, 1, 0, 0);
+        glRotated(90, 1, 0, 0);        
         glutWireSphere(0.4, 30, 30);            
     glPopMatrix();
     
     glPushMatrix();        
        // Head
         glTranslated(0, 0.6, 0);        
-        glRotated(90, 1, 0, 0);
+        glRotated(90, 1, 0, 0);        
         glutWireSphere(0.2, 30, 30);      
         
        // Nose               
         glTranslated(0.17, 0, 0);
-        glRotated(90, 0, 1, 0);
+        glRotated(90, 0, 1, 0);        
         glutWireCone(0.07, 0.2, 15, 15);
     glPopMatrix();            
 } 
@@ -74,6 +79,12 @@ void initAngle() {
     xRot  = 0;   
 }
 
+void initFigureSize() {
+    xSize = 1;
+    ySize = 1;
+    zSize = 1;
+}
+
 ///////////////
 // End Inits //
 ///////////////
@@ -83,15 +94,29 @@ void initAngle() {
 ///////////////
 
 void onKey(unsigned char key, int x, int y) {
+    mode = 0;
     switch (key) {
         case 'h':
             cout << "press ESC to exit" << endl;                                    
-                          
+            cout << "press - to make small" << endl;                                    
+            cout << "press + to make big" << endl;                                    
             break;
         case 27:        // ascii 27 == ESC
             exit(0); 
             break;
-    }
+        case 45:        // ascii 45 == '-'            
+            xSize = 0.7;
+            ySize = 0.7;
+            zSize = 0.7;            
+            mode = 1;
+            break;
+        case 43:        // ascii 43 == '+'            
+            xSize = 1.3;
+            ySize = 1.3;
+            zSize = 1.3;                        
+            mode = 1;
+            break;
+    }    
     glutPostRedisplay();
 }
 
@@ -104,6 +129,7 @@ void onMouseMove(int x, int y) {
     else 
         angle -= 10;            
         
+    mode = 0;
     xPast = x; yPast = y;        
     glutPostRedisplay();
 }
@@ -150,6 +176,7 @@ int main(int argc, char **argv) {
     initGlut();
     initColors();
     initAngle();
+    initFigureSize();
     
     //Callbacks
     glutDisplayFunc(renderScene);
