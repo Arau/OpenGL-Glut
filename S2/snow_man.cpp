@@ -10,45 +10,40 @@ int xWindow, yWindow, xPast, yPast;
 int angle, xRot, yRot, zRot;
 int mode = 0;
 
-void drawAxes() {           
-        glBegin(GL_LINES);
-                glColor3f(1, 0, 0);        
-                glVertex3i(  0, 0, 0);
-                glVertex3i( 20, 0, 0);
-                
-                glColor3f(0, 1, 0);
-                glVertex3i( 0,  0, 0);
-                glVertex3i( 0, 20, 0);
-                
-                glColor3f(1, 1, 1);
-                glVertex3i( 0, 0,  0);
-                glVertex3i( 0, 0, 20);
-        glEnd();        
+void drawAxes() {          
+    glBegin(GL_LINES);
+            glColor3f(1, 0, 0);        
+            glVertex3i(  0, 0, 0);
+            glVertex3i( 20, 0, 0);
+            
+            glColor3f(0, 1, 0);
+            glVertex3i( 0,  0, 0);
+            glVertex3i( 0, 20, 0);
+            
+            glColor3f(1, 1, 1);
+            glVertex3i( 0, 0,  0);
+            glVertex3i( 0, 0, 20);
+    glEnd();     
 }
 
-void drawSnowMan()  {    
+void drawSnowMan()  {        
     // Body
-    
-    glRotated(angle, 0, 1, 0);
-    if (mode == 1)
-        glScaled(xSize, ySize, zSize);
-    
     glPushMatrix();              
         glRotated(90, 1, 0, 0);        
         glutWireSphere(0.4, 30, 30);            
     glPopMatrix();
     
     glPushMatrix();        
-       // Head
+    // Head
         glTranslated(0, 0.6, 0);        
         glRotated(90, 1, 0, 0);        
         glutWireSphere(0.2, 30, 30);      
         
-       // Nose               
+    // Nose               
         glTranslated(0.17, 0, 0);
         glRotated(90, 0, 1, 0);        
         glutWireCone(0.07, 0.2, 15, 15);
-    glPopMatrix();            
+    glPopMatrix(); 
 } 
 
 ///////////////
@@ -100,21 +95,25 @@ void onKey(unsigned char key, int x, int y) {
             cout << "press ESC to exit" << endl;                                    
             cout << "press - to make small" << endl;                                    
             cout << "press + to make big" << endl;                                    
+            cout << "press v to change perspective" << endl;         
             break;
         case 27:        // ascii 27 == ESC
             exit(0); 
             break;
         case 45:        // ascii 45 == '-'            
-            xSize = 0.7;
-            ySize = 0.7;
-            zSize = 0.7;            
+            
+            xSize -= 0.3;
+            ySize -= 0.3;
+            zSize -= 0.3;            
             mode = 1;
             break;
         case 43:        // ascii 43 == '+'            
-            xSize = 1.3;
-            ySize = 1.3;
-            zSize = 1.3;                        
+            xSize += 0.3;
+            ySize += 0.3;
+            zSize += 0.3;            
             mode = 1;
+            break;
+        case 'v':
             break;
     }    
     glutPostRedisplay();
@@ -159,8 +158,18 @@ void onChangeWindowSize(int width, int height) {
 void renderScene() {
     glClear(GL_COLOR_BUFFER_BIT);    
     
-    drawAxes(); 
-    drawSnowMan();    
+    glPushMatrix();
+        glLoadIdentity();
+        drawAxes(); 
+    glPopMatrix();
+    
+    glPushMatrix();        
+        glRotated(angle, 0, 1, 0);        
+        glRotated(90, 1, 0, 0);                        
+        glScaled(xSize, ySize, zSize);
+        
+        drawSnowMan();         
+    glPopMatrix();
     
     glutSwapBuffers();
 }
