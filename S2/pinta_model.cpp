@@ -12,6 +12,7 @@ float xSize, ySize, zSize;
 int xWindow, yWindow, xPast, yPast;
 int angle, xRot, yRot, zRot;
 int mode = 0;
+int type_of_draw;
 
 ////////////////
 // Model VARs //
@@ -95,7 +96,7 @@ void drawModel() {
     glColor3f(0, 1 ,1);
     
     for (int i = 0; i < mod_faces.size(); i++) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPolygonMode(GL_FRONT_AND_BACK, type_of_draw);
         glBegin(GL_POLYGON);
         
         if (modmat != mod_faces[i].mat)
@@ -136,6 +137,10 @@ void initGlut() {
     glutCreateWindow("Geo. Figures");        
 }
 
+void initBuffers() {
+    glEnable(GL_DEPTH_TEST);
+}
+
 void initAngle() {
     angle = 0;
     xRot  = 0;
@@ -147,6 +152,10 @@ void initFigureSize() {
     xSize = 1;
     ySize = 1;
     zSize = 1;
+}
+
+void initTypeOfDraw() {
+    type_of_draw = GL_FILL;
 }
 
 void initModel(string name) {
@@ -194,33 +203,47 @@ void onKey(unsigned char key, int x, int y) {
     mode = 0;
     switch (key) {
         case 'h':
-            cout << "press ESC to exit" << endl;                                    
-            cout << "press - to make small" << endl;                                    
-            cout << "press + to make big" << endl;                                    
-            cout << "press v to change perspective" << endl;         
+            cout << "press ESC to exit"           << endl;                                    
+            cout << "press - to make small"       << endl;                                    
+            cout << "press + to make big"         << endl;                                    
+            cout << "press . to load Homer"       << endl;                                    
+            cout << "press , to load Porsche"     << endl;                                    
+            cout << "press t to change draw type" << endl;
             break;
+            
         case 27:        // ascii 27 == ESC
             exit(0); 
             break;
-        case 45:        // ascii 45 == '-'            
             
+        case 't':
+            if (type_of_draw == GL_FILL)
+                type_of_draw = GL_LINE;
+            else 
+                type_of_draw = GL_FILL;
+            break;
+            
+        case 45:        // ascii 45 == '-'                        
             xSize -= 0.3;
             ySize -= 0.3;
             zSize -= 0.3;            
             mode = 1;
             break;
+            
         case 43:        // ascii 43 == '+'            
             xSize += 0.3;
             ySize += 0.3;
             zSize += 0.3;            
             mode = 1;
             break;
+            
         case '.':        
             initModel("homer.obj");
             break;
+            
         case ',':            
             initModel("porsche.obj");
             break;
+            
     }    
     glutPostRedisplay();
 }
@@ -262,7 +285,7 @@ void onChangeWindowSize(int width, int height) {
 }
 
 void renderScene() {
-    glClear(GL_COLOR_BUFFER_BIT);    
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);    
     
     glPushMatrix();
         glLoadIdentity();
@@ -276,8 +299,7 @@ void renderScene() {
         glScaled(xSize, ySize, zSize);    
         
         // Prepare model drawing
-        glMatrixMode(GL_MODELVIEW);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glMatrixMode(GL_MODELVIEW);        
         glGetDoublev(GL_MODELVIEW_MATRIX, m);       
         
         drawModel();    
@@ -295,8 +317,10 @@ int main(int argc, char **argv) {
     glutInit(&argc, argv);    
     initGlobals();
     initGlut();    
+    initBuffers();
     initAngle();
     initFigureSize();    
+    initTypeOfDraw();
     
     //Callbacks
     glutDisplayFunc(renderScene);
