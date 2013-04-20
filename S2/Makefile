@@ -14,7 +14,7 @@ pinta_model:
 	g++ pinta_model.cpp model.o -o pinta_model.exe -I /assig/idi/include/ /usr/lib/libglut.so.3 /usr/lib/libGL.so.1 /usr/lib/libGLU.so.1 -lGL
 
 solar:
-	g++ solar_sytem.cpp model.o -o solar_system.exe -I /assig/idi/include/ /usr/lib/libglut.so.3 /usr/lib/libGL.so.1 /usr/lib/libGLU.so.1 -lGL
+	g++ solar_system.cpp model.o -o solar_system.exe -I /assig/idi/include/ /usr/lib/libglut.so.3 /usr/lib/libGL.so.1 /usr/lib/libGLU.so.1 -lGL
 
 clean:
 	rm -f *.exe *.out *~$ 
