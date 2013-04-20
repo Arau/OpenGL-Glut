@@ -13,31 +13,63 @@ int xWindow, yWindow, xPast, yPast;
 int angle, xRot, yRot, zRot;
 int mode = 0;
 
+////////////////
+// Model VARs //
+////////////////
+
 struct myVertex {
     GLdouble x;
     GLdouble y;
     GLdouble z;
 };
 
-myVertex mods;
+vector<Face> mod_faces;
+vector<Vertex> mod_vertices;
+vector<Normal> mod_normals;
 
-vector<Face> modface;
-vector<Vertex> modv;
-vector<Normal> modn;
 
-myVertex modM;
-myVertex modm;
-myVertex modc;
+myVertex model_center;
 
 double mod_scale;
 int modmat;
 
-double modsphereR;
 GLdouble m[16];
 
 Model model;
 
 
+//////////////
+// Utils    //
+//////////////
+
+void getLimitVertex(myVertex &min, myVertex &max) {
+        
+    // inicialize
+    
+    min.x = mod_vertices[0];
+    min.y = mod_vertices[1];
+    min.z = mod_vertices[2];
+    
+    max.x = mod_vertices[0] + 1;
+    max.y = mod_vertices[1] + 1;
+    max.z = mod_vertices[3] + 1;
+       
+    for (int i = 0; i < mod_vertices.size(); i += 3) {
+        if      (mod_vertices[i] < min.x) min.x = mod_vertices[i];
+        else if (mod_vertices[i] > max.x) max.x = mod_vertices[i];
+        
+        if      (mod_vertices[i + 1] < min.y) min.y = mod_vertices[i+1];
+        else if (mod_vertices[i + 1] > max.y) max.y = mod_vertices[i+1];
+        
+        if      (mod_vertices[i + 2] < min.z) min.z = mod_vertices[i+2];
+        else if (mod_vertices[i + 2] > max.z) max.z = mod_vertices[i+2];
+    }
+}
+
+
+//////////////
+// Drawing  //
+//////////////
 
 void drawAxes() {          
     glBegin(GL_LINES);
@@ -56,46 +88,46 @@ void drawAxes() {
 }
 
 void drawModel() {
-    glPushMatrix();
+    glPushMatrix();   
+    
     glScaled(mod_scale, mod_scale, mod_scale);    
-    glTranslated(-modc.x, -modc.y, -modc.z);
-    //glColor3f(0, 1 ,1);
-    for (unsigned int i = 0; i < modface.size(); i++) {
+    glTranslated(-model_center.x, -model_center.y, -model_center.z);
+    glColor3f(0, 1 ,1);
+    
+    for (int i = 0; i < mod_faces.size(); i++) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glBegin(GL_POLYGON);
         
-        if (modmat != modface[i].mat) {
-            modmat = modface[i].mat;
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, Materials[modmat].ambient);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, Materials[modmat].diffuse);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, Materials[modmat].specular);
-            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, Materials[modmat].shininess);
-        }
-        // la normal tambe va abans de pintar
-        if (modface[i].n.size() != 0) {
-            glNormal3f(modn[modface[i].n[0]], modn[modface[i].n[0] + 1], modn[modface[i].n[0] + 2]);
-        }
-        else {
-            glNormal3f(modface[i].normalC[0], modface[i].normalC[1], modface[i].normalC[2]);
-        }
+        if (modmat != mod_faces[i].mat)
+            modmat = mod_faces[i].mat;        
         
-        // pintar vertex
-        for (unsigned int j = 0; j < modface[i].v.size(); j++) {
-            glVertex3d(modv[modface[i].v[j]], modv[modface[i].v[j] + 1], modv[modface[i].v[j] + 2]);
+        // normal 
+        if (mod_faces[i].n.size() != 0) {
+            int normal = mod_faces[i].n[0];
+            glNormal3f(mod_normals[normal], mod_normals[normal + 1], mod_normals[normal + 2]);
+        }
+        else
+            glNormal3f(mod_faces[i].normalC[0], mod_faces[i].normalC[1], mod_faces[i].normalC[2]);
+                
+        // drawing vertices
+        for (int j = 0; j < mod_faces[i].v.size(); j++) {
+            int vertex = mod_faces[i].v[j];
+            glVertex3d(mod_vertices[vertex], mod_vertices[vertex + 1], mod_vertices[vertex + 2]);
         }       
 
         glEnd();    
     }
-    glPopMatrix();
     
+    glPopMatrix();
 }
-///////////////
-//  Inits  ////
-///////////////
+
+/////////////
+//  Inits  //
+/////////////
 
 void initGlobals() {        
-    xWindow = 600;
-    yWindow = 600;    
+    xWindow = 900;
+    yWindow = 900;    
 }
 
 void initGlut() {        
@@ -118,8 +150,8 @@ void initFigureSize() {
 }
 
 void initModel(string name) {
-    /***************************************************************/
-    /* Model loading and computation *******************************/
+   
+    /* Model loading and computation */
     
     model = Model();
     model.load(name);
@@ -127,55 +159,32 @@ void initModel(string name) {
     cout << "model loaded" << endl;
     
     // vector load
-    modv    = model.vertices();
-    modface = model.faces();
-    modn    = model.normals();
+    mod_vertices = model.vertices();
+    mod_faces    = model.faces();
+    mod_normals  = model.normals();             
     
-    double sphR;
+    // model limits
+    myVertex vertex_max;
+    myVertex vertex_min;
+    getLimitVertex(vertex_min, vertex_max);        
     
-    // model edges
-    for (unsigned int i = 0; i < modv.size(); i += 3) {
-        if      (modv[i] < modm.x) modm.x = modv[i];
-        else if (modv[i] > modM.x) modM.x = modv[i];
-        
-        if      (modv[i + 1] < modm.y) modm.y = modv[i+1];
-        else if (modv[i + 1] > modM.y) modM.y = modv[i+1];
-        
-        if      (modv[i + 2] < modm.z) modm.z = modv[i+2];
-        else if (modv[i + 2] > modM.z) modM.z = modv[i+2];
-    }
-    
+    // model center    
+    model_center.x = (vertex_min.x + vertex_max.x)/2;
+    model_center.y = (vertex_min.y + vertex_max.y)/2;
+    model_center.z = (vertex_min.z + vertex_max.z)/2;
+         
     // model size
-    mods.x = abs(modM.x - modm.x);
-    mods.y = abs(modM.y - modm.y);
-    mods.z = abs(modM.z - modm.z);
+    myVertex model_size;
+    model_size.x = abs(vertex_max.x - vertex_min.x);
+    model_size.y = abs(vertex_max.y - vertex_min.y);
+    model_size.z = abs(vertex_max.z - vertex_min.z);
     
-    // model center
-    modc.x = (modm.x + modM.x)/2;
-    modc.y = (modm.y + modM.y)/2;
-    modc.z = (modm.z + modM.z)/2;
+    // scale until 1 diameter sphere
+    mod_scale = 1/max(model_size.x, max(model_size.y, model_size.z));
     
-    // containing sphere
-    for (unsigned int i = 0; i < modv.size(); i += 3) {
-        sphR = sqrt(pow(modv[i] - modc.x, 2) + pow(modv[i + 1] - modc.y, 2) + pow(modv[i + 2] - modc.z, 2));
-        if (sphR > modsphereR) modsphereR = sphR;
-    }
-    
-    // scale to fit the model within size 6 diameter sphere
-    mod_scale = 6/max(mods.x, max(mods.y, mods.z));
-    
-    
-    cout << "Computing finished" << endl;
-    
-    /* End model affairs *******************************************/
-    /***************************************************************/
-
-    
+    cout << "Computing finished" << endl;    
 }
 
-///////////////
-// End Inits //
-///////////////
 
 ///////////////
 // Callbacks //
@@ -260,18 +269,26 @@ void renderScene() {
         drawAxes(); 
     glPopMatrix();
     
-    glMatrixMode(GL_MODELVIEW);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glGetDoublev(GL_MODELVIEW_MATRIX, m);       
-    
-    drawModel();    
-    
+    glPushMatrix();
+        
+        // Geomethrics Transformations
+        glRotated(angle, 0, 1, 0);                        
+        glScaled(xSize, ySize, zSize);    
+        
+        // Prepare model drawing
+        glMatrixMode(GL_MODELVIEW);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glGetDoublev(GL_MODELVIEW_MATRIX, m);       
+        
+        drawModel();    
+    glPopMatrix();
+        
     glutSwapBuffers();
 }
 
-/////////////////
-// End Callbacks
-/////////////////
+///////////////////
+// End Callbacks //
+///////////////////
 
 int main(int argc, char **argv) {    
     // Inits
