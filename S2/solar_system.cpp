@@ -12,7 +12,7 @@ float xSize, ySize, zSize;
 float solar_angle[10]; 
 int xWindow, yWindow, xPast, yPast;
 int angle, xRot, yRot, zRot;
-int type_of_draw, delay;
+int type_of_draw, delay, state;
 long long index;
 
 ////////////////
@@ -235,6 +235,7 @@ void initTypeOfDraw() {
 
 void initAnimation() {
     index = 0;
+    state = 0;
     delay = 20000;
 }
 
@@ -242,11 +243,12 @@ void initAnimation() {
 // Callbacks //
 ///////////////
 
-void onKey(unsigned char key, int x, int y) {    
+void onKey(unsigned char key, int x, int y) {        
     switch (key) {
         case 'h':
             cout << "press ESC to exit"                << endl;                                                                        
             cout << "press t to change draw type"      << endl;            
+            cout << "press v to rotate all scene"      << endl;            
             break;
             
         case 27:        // ascii 27 == ESC
@@ -257,7 +259,34 @@ void onKey(unsigned char key, int x, int y) {
                 type_of_draw = GL_LINE;
             else 
                 type_of_draw = GL_FILL;
-            break;            
+            break;          
+            
+        case 'v':            
+            if (state == 3) {
+                glRotated(-90, 0, 0, 1);   // Come back to initial position
+                glRotated(-90, 0, 1, 0);   // Come back to initial position
+                glRotated(-90, 1, 0, 0);   // Come back to initial position
+                state = 0;
+            }
+            
+            if (state == 0) {
+                glRotated(90, 1, 0, 0);
+                cout << "Rotate 90 X axe" << endl;
+            }
+            else if (state == 1) {                
+                glRotated(90, 0, 1, 0);
+                glRotated(-90, 1, 0, 0);    // Come back to initial position
+                cout << "Rotate 90 Y axe" << endl;
+            }
+            else {
+                glRotated(90, 0, 0, 1);
+                glRotated(-90, 0, 1, 0);   // Come back to initial position
+                glRotated(-90, 1, 0, 0);   // Come back to initial position                
+                cout << "Rotate 90 Z axe" << endl;
+            }            
+            ++state;
+            break;
+            
     }    
     glutPostRedisplay();
 }
