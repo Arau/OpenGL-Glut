@@ -44,7 +44,9 @@ Model model;
 // Camera //
 ////////////
 myVertex obs, vrp, up;
-
+double aspect;
+int zNear = 1;
+int zFar  = 200;
 
 //////////////
 // Utils    //
@@ -78,20 +80,19 @@ void getLimitVertex(myVertex &min, myVertex &max) {
 // Drawing  //
 //////////////
 
-void drawAxes() {          
+void drawFloor() {          
+    glColor3f(1, 0, 0);
     glBegin(GL_LINES);
-            glColor3f(1, 0.4, 0.4);        
-            glVertex3i(-50, 0, 0);
-            glVertex3i( 50, 0, 0);
+        for (int i = -70; i <= 70; ++i) {
+            glVertex3i(i, -3, 70);  // vertical lines
+            glVertex3i(i, -3, -70);
             
-            glColor3f(0.4, 1, 0.4);
-            glVertex3i( 0,-50, 0);
-            glVertex3i( 0, 50, 0);
-            
-            glColor3f(1, 1, 1);
-            glVertex3i( 0, 0,-50);
-            glVertex3i( 0, 0, 50);
-    glEnd();     
+            glVertex3i(-70, -1, i); // horizontal lines
+            glVertex3i(70, -1, i);
+        }
+
+    glEnd();
+    glColor3f(1, 1, 1);
 }
 
 void drawModel() {
@@ -138,7 +139,7 @@ void defineCamParams() {
     obs.z = 2.0;
 
     vrp.x = 0.0;
-    vrp.y = 0.0;
+    vrp.y = 0.0;        
     vrp.z = 0.0;
 
     up.x = 0.0;
@@ -146,19 +147,9 @@ void defineCamParams() {
     up.z = 0.0;
 }
 
-void defineOrthoCam() {    
-    glMatrixMode(GL_PROJECTION);    
-    glLoadIdentity();
-    glOrtho(-1.5, 1.5, -1.5, 1.5, 0.1, 100.0);    
-}
-
 void moveCamera() {
-    glMatrixMode(GL_MODELVIEW);            
-        
-    glLoadIdentity();
-    
-    cout << "Observer: " << obs.x << ' ' << obs.y << ' ' << obs.z << endl;
-    
+    glMatrixMode(GL_MODELVIEW);                    
+    glLoadIdentity();            
     gluLookAt(
        obs.x, obs.y, obs.z,
        vrp.x, vrp.y, vrp.z,
@@ -166,10 +157,25 @@ void moveCamera() {
     );    
 }
 
+void definePersCam() {
+    glMatrixMode(GL_PROJECTION);    
+    glLoadIdentity();
+    double fovy = 35;
+    
+    gluPerspective(fovy, aspect, zNear, zFar);
+    moveCamera();
+}
+
+void defineOrthoCam() {    
+    glMatrixMode(GL_PROJECTION);    
+    glLoadIdentity();
+    glOrtho(-6, 6, -6, 6, zNear, zFar);    
+    moveCamera();   
+}
+
 void initCamera() {    
     defineCamParams();    
-    defineOrthoCam();
-    moveCamera();   
+    defineOrthoCam();    
 }
 
 /////////////
@@ -178,7 +184,8 @@ void initCamera() {
 
 void initGlobals() {        
     xWindow = 1200;
-    yWindow = 700;        
+    yWindow = 700; 
+    aspect  = xWindow/yWindow;
 }
 
 void initGlut() {        
@@ -250,7 +257,13 @@ void onKey(unsigned char key, int x, int y) {
         case 'h':
             cout << "press ESC to exit"                << endl;                                                                        
             cout << "press t to change draw type"      << endl;            
-            cout << "press v to change scene view"     << endl;            
+            cout << "press n to make scene near"       << endl;
+            cout << "press f to make scene far"        << endl;
+            cout << "press p to perspective camera"    << endl;            
+            cout << "press x to axonometric camera"    << endl;            
+            cout << "press v to plant view"            << endl;
+            cout << "press i to front view"            << endl;
+            cout << "press l to lateral view"          << endl;
             break;
             
         case 27:        // ascii 27 == ESC
@@ -269,6 +282,26 @@ void onKey(unsigned char key, int x, int y) {
             moveCamera();
             break;
             
+        case 'i':            
+            obs.x = 0; obs.y = 0; obs.z = 2; // plant view
+            up.x = 0; up.y = 1; up.z = 0;
+            moveCamera();
+            break;
+       
+        case 'l':            
+            obs.x = 2; obs.y = 0; obs.z = 0; // plant view
+            up.x = 0; up.y = 1; up.z = 0;
+            moveCamera();
+            break;
+                   
+        case 'p':
+            definePersCam();            
+            break;
+        
+        case 'x':
+            defineOrthoCam();            
+            break;
+            
     }    
     glutPostRedisplay();
 }
@@ -284,16 +317,16 @@ void onChangeWindowSize(int width, int height) {
     // Update globals
     xWindow = width;
     yWindow = height;
+    aspect  = xWindow/yWindow;
 }
 
 void renderScene() {                    
     
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);    
-    int i = 0;        
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);        
     
-    glPushMatrix();
-        glLoadIdentity();
-        drawAxes(); 
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();        
+        drawFloor(); 
     glPopMatrix();
         
     glPushMatrix();        
