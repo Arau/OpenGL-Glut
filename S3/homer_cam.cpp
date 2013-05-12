@@ -47,6 +47,7 @@ myVertex obs, vrp, up;
 double aspect;
 int zNear = 1;
 int zFar  = 200;
+double PI = 3.141592653589793;
 
 //////////////
 // Utils    //
@@ -159,9 +160,8 @@ void moveCamera() {
 
 void definePersCam() {
     glMatrixMode(GL_PROJECTION);    
-    glLoadIdentity();
-    double fovy = 35;
-    
+    glLoadIdentity();    
+    double fovy = 2*((atan(0.25)*180/PI));  // arctan. to Degs.    
     gluPerspective(fovy, aspect, zNear, zFar);
     moveCamera();
 }
