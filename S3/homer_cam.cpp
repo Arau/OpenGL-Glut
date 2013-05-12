@@ -45,6 +45,7 @@ Model model;
 ////////////
 myVertex obs, vrp, up;
 double aspect;
+double fovy;
 int zNear = 1;
 int zFar  = 200;
 double PI = 3.141592653589793;
@@ -146,6 +147,8 @@ void defineCamParams() {
     up.x = 0.0;
     up.y = 1.0;
     up.z = 0.0;
+    
+    fovy = 2*((atan(0.25)*180/PI));  // arctan. to Degs.
 }
 
 void moveCamera() {
@@ -161,7 +164,6 @@ void moveCamera() {
 void definePersCam() {
     glMatrixMode(GL_PROJECTION);    
     glLoadIdentity();    
-    double fovy = 2*((atan(0.25)*180/PI));  // arctan. to Degs.    
     gluPerspective(fovy, aspect, zNear, zFar);
     moveCamera();
 }
@@ -295,11 +297,21 @@ void onKey(unsigned char key, int x, int y) {
             break;
                    
         case 'p':
-            definePersCam();            
+            definePersCam();
             break;
         
         case 'x':
             defineOrthoCam();            
+            break;
+            
+        case 'n':
+            fovy -= 3;
+            definePersCam();
+            break;
+            
+        case 'f':
+            fovy += 3;
+            definePersCam();
             break;
             
     }    
