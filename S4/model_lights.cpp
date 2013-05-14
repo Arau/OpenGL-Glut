@@ -52,6 +52,13 @@ double PI = 3.141592653589793;
 int camAngle, camAngleX, camAngleY, camAngleZ;
 int xMove, yMove, zMove;
 
+////////////
+// Lights //
+////////////
+
+int switchLight;
+
+
 //////////////
 // Utils    //
 //////////////
@@ -84,7 +91,7 @@ void getLimitVertex(myVertex &min, myVertex &max) {
 // Drawing  //
 //////////////
 
-void drawFloor() {          
+void drawFloor() {              
     glColor3f(1, 0, 0);
     glBegin(GL_LINES);
         for (int i = -70; i <= 70; ++i) {
@@ -96,22 +103,27 @@ void drawFloor() {
         }
 
     glEnd();
-    glColor3f(1, 1, 1);
+    glColor3f(1, 1, 1);   
 }
 
 void drawModel() {
     glPushMatrix();   
     
     glScaled(mod_scale, mod_scale, mod_scale);    
-    glTranslated(-model_center.x, -model_center.y, -model_center.z);
-    glColor3f(0, 1 ,1);
+    glTranslated(-model_center.x, -model_center.y, -model_center.z);    
     
     for (int i = 0; i < mod_faces.size(); i++) {
         glPolygonMode(GL_FRONT_AND_BACK, type_of_draw);
         glBegin(GL_POLYGON);
         
-        if (modmat != mod_faces[i].mat)
-            modmat = mod_faces[i].mat;        
+        if (modmat != mod_faces[i].mat) {
+            modmat = mod_faces[i].mat; 
+	    
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, Materials[modmat].ambient);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, Materials[modmat].diffuse);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, Materials[modmat].specular);
+            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, Materials[modmat].shininess);
+	}
         
         // normal 
         if (mod_faces[i].n.size() != 0) {
@@ -131,6 +143,24 @@ void drawModel() {
     }
     
     glPopMatrix();
+}
+
+/////////////
+//  Lights //
+/////////////
+
+void initLights() {
+  switchLight = 1;
+  glEnable(GL_LIGHTING);
+  glEnable(GL_LIGHT0);
+}
+
+void switchOn(int light) {
+  glEnable(light);
+}
+
+void switchOff(int light) {  
+  glDisable(light);	
 }
 
 /////////////
@@ -254,7 +284,7 @@ void initModel(string name) {
 
 void initTypeOfDraw() {
     type_of_draw = GL_FILL;
-    initModel("homer.obj");
+    initModel("legoman-assegut.obj");
 }
 
 ///////////////
@@ -368,6 +398,17 @@ void onKey(unsigned char key, int x, int y) {
 	    glMatrixMode(GL_MODELVIEW);
 	    glRotatef(-10, 0, 0, 1);
 	    break;
+	    
+	case 'c':
+	    if (switchLight == 0) {
+	      switchLight = 1;
+	      switchOn(GL_LIGHT0);
+	    }
+	    else {
+	      switchLight = 0;
+	      switchOff(GL_LIGHT0);
+	    }
+	    break;
                     
     }    
     glutPostRedisplay();
@@ -420,6 +461,7 @@ int main(int argc, char **argv) {
     initAngle();    
     initTypeOfDraw();    
     initCamera();
+    initLights();
     
     //Callbacks
     glutDisplayFunc(renderScene);
