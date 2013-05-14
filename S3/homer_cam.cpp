@@ -46,9 +46,14 @@ Model model;
 myVertex obs, vrp, up;
 double aspect;
 double fovy;
+double rotX, rotY, rotZ;
 int zNear = 1;
 int zFar  = 200;
 double PI = 3.141592653589793;
+char camMode; // Ortho vs Persp
+char camPosMode; // LookAt vs Euler
+int camAngle, camAngleX, camAngleY, camAngleZ;
+int xMove, yMove, zMove;
 
 //////////////
 // Utils    //
@@ -86,8 +91,8 @@ void drawFloor() {
     glColor3f(1, 0, 0);
     glBegin(GL_LINES);
         for (int i = -70; i <= 70; ++i) {
-            glVertex3i(i, -3, 70);  // vertical lines
-            glVertex3i(i, -3, -70);
+            glVertex3i(i, -1, 70);  // vertical lines
+            glVertex3i(i, -1, -70);
             
             glVertex3i(-70, -1, i); // horizontal lines
             glVertex3i(70, -1, i);
@@ -148,10 +153,14 @@ void defineCamParams() {
     up.y = 1.0;
     up.z = 0.0;
     
-    fovy = 2*((atan(0.25)*180/PI));  // arctan. to Degs.
+    fovy = 2*((atan(0.25)*180/PI));  // arctan. to Degs.        
+    camAngle = 0; camAngleX = 0; camAngleY = 0; camAngleZ = 0;    
+    rotX = 0; rotY = 0;  rotZ = 0;
+    xMove = 0; yMove = 0; zMove = 0;
 }
 
-void moveCamera() {
+void moveCameraLookAt() {    
+    camPosMode = 'l';
     glMatrixMode(GL_MODELVIEW);                    
     glLoadIdentity();            
     gluLookAt(
@@ -161,23 +170,52 @@ void moveCamera() {
     );    
 }
 
+void moveLeft() {
+    camPosMode = 'e';
+    glMatrixMode(GL_MODELVIEW);        
+    glRotatef(30, 0, 1, 0);    
+    glTranslated(--xMove, 0, 0);
+}
+
+void moveRight(){}
+
+void moveFront() {}
+
+void moveBack() {}
+
+void moveCameraEuler() {
+    camPosMode = 'e';
+    glMatrixMode(GL_MODELVIEW);        
+    glRotatef(camAngle, rotX, rotY, rotZ);    
+}
+
 void definePersCam() {
+    camMode = 'p'; // Perspective
     glMatrixMode(GL_PROJECTION);    
     glLoadIdentity();    
     gluPerspective(fovy, aspect, zNear, zFar);
-    moveCamera();
+    
+    if (camPosMode = 'l')
+        moveCameraLookAt();
+    else //Euler
+        moveCameraEuler();
 }
 
 void defineOrthoCam() {    
+    camMode = 'o'; // Ortho
     glMatrixMode(GL_PROJECTION);    
     glLoadIdentity();
-    glOrtho(-6, 6, -6, 6, zNear, zFar);    
-    moveCamera();   
+    glOrtho(-4, 4, -4, 4, zNear, zFar);    
+    if (camPosMode = 'l')
+        moveCameraLookAt();
+    else //Euler
+        moveCameraEuler();    
 }
 
-void initCamera() {    
+void initCamera() {      
     defineCamParams();    
-    defineOrthoCam();    
+    camPosMode = 'l'; // LookAt
+    definePersCam();    
 }
 
 /////////////
@@ -258,14 +296,39 @@ void onKey(unsigned char key, int x, int y) {
     switch (key) {
         case 'h':
             cout << "press ESC to exit"                << endl;                                                                        
-            cout << "press t to change draw type"      << endl;            
-            cout << "press n to make scene near"       << endl;
-            cout << "press f to make scene far"        << endl;
+            cout << "press t to change draw type"      << endl;
+            cout << endl;
+                        
             cout << "press p to perspective camera"    << endl;            
-            cout << "press x to axonometric camera"    << endl;            
-            cout << "press v to plant view"            << endl;
-            cout << "press i to front view"            << endl;
-            cout << "press l to lateral view"          << endl;
+            cout << "press x to axonometric camera"    << endl;
+            cout << endl;
+            
+            cout << "If Perspective mode: \n" << endl;
+            cout << "press n to make scene near"       << endl;
+            cout << "press f to make scene far"        << endl;            
+            cout << endl;
+            
+            cout << "press a to gluLookAt"             << endl;
+            cout << "press e to Euler cam. definition" << endl;
+            cout << endl;
+            
+            cout << "If LookAt mode: \n" << endl;
+            cout << "\tpress v to plant view"            << endl;
+            cout << "\tpress i to front view"            << endl;
+            cout << "\tpress l to lateral view"          << endl;
+            
+            cout << endl;
+            cout << "If Euler mode: \n" << endl;
+            cout << "\tpress 1 to move X respect, hourly "    << endl;
+            cout << "\tpress 3 to move X respect, (-)hourly " << endl;
+            cout << endl;
+            cout << "\tpress 2 to move Y respect, hourly"     << endl;
+            cout << "\tpress 4 to move Y respect, (-)hourly" << endl;
+            cout << endl;
+            cout << "\tpress 5 to move Z respect, hourly "    << endl;
+            cout << "\tpress 6 to move Z respect, (-)hourly " << endl;
+
+            cout << "press w to walk mode " << endl;
             break;
             
         case 27:        // ascii 27 == ESC
@@ -278,22 +341,31 @@ void onKey(unsigned char key, int x, int y) {
                 type_of_draw = GL_FILL;
             break;          
             
-        case 'v':            
-            obs.x = 0; obs.y = 2; obs.z = 0; // plant view
-            up.x = 1; up.y = 0; up.z = 0;
-            moveCamera();
+        case 'v':       
+            // plant view
+            if (camPosMode == 'l') {
+                obs.x = 0; obs.y = 2; obs.z = 0;
+                up.x = 1; up.y = 0; up.z = 0;
+                moveCameraLookAt();
+            }            
             break;
             
         case 'i':            
-            obs.x = 0; obs.y = 0; obs.z = 2; // plant view
-            up.x = 0; up.y = 1; up.z = 0;
-            moveCamera();
-            break;
+            // front view
+            if (camPosMode == 'l') {
+                obs.x = 0; obs.y = 0; obs.z = 2; 
+                up.x = 0; up.y = 1; up.z = 0;
+                moveCameraLookAt();                
+            }            
+            break;            
        
         case 'l':            
-            obs.x = 2; obs.y = 0; obs.z = 0; // plant view
-            up.x = 0; up.y = 1; up.z = 0;
-            moveCamera();
+            // lateral view
+            if (camPosMode == 'l') {
+                obs.x = 2; obs.y = 0; obs.z = 0; 
+                up.x = 0; up.y = 1; up.z = 0;
+                moveCameraLookAt();
+            }            
             break;
                    
         case 'p':
@@ -304,16 +376,80 @@ void onKey(unsigned char key, int x, int y) {
             defineOrthoCam();            
             break;
             
-        case 'n':
+        case 'n':    
             fovy -= 3;
-            definePersCam();
+            definePersCam();    
             break;
             
-        case 'f':
+        case 'f':                        
             fovy += 3;
-            definePersCam();
+            definePersCam();            
             break;
             
+        case 'a':
+            moveCameraLookAt();
+            break;
+            
+        case 'e':
+            moveCameraEuler();
+            break;
+            
+        case '1':
+            if (camAngleX < 0) 
+                camAngleX = 0;
+            
+            camAngleX += 1;
+            rotX = 0; rotY = 1; rotZ = 0;                
+
+            camAngle = camAngleX;            
+            moveCameraEuler();
+            break;
+            
+        case '2':
+            if (camAngleY > 0) 
+                camAngleY = 0;
+            
+            camAngleY -= 1;
+            rotX = 1; rotY = 0; rotZ = 0;
+            
+            camAngle = camAngleY;
+            moveCameraEuler();
+            break;
+            
+        case '3':
+            if (camAngleX < 0) 
+                camAngleX = 0;
+            
+            camAngleX += 1;
+            rotX = 1; rotY = 0; rotZ = 0;
+            
+            camAngle = camAngleX;
+            moveCameraEuler();
+            break;
+          
+        case '4':
+            if (camAngleY > 0) 
+                camAngleY = 0;
+            
+            camAngleY -= 1;
+            rotX = 0; rotY = 1; rotZ = 0;
+            
+            camAngle = camAngleY;
+            moveCameraEuler();
+            break;
+            
+        case '7':
+            moveLeft();
+            break;
+            
+        case '8':
+            break;
+
+        case '9':
+            break;
+               
+        case '0':
+            break;
     }    
     glutPostRedisplay();
 }
