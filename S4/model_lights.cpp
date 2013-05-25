@@ -13,10 +13,17 @@ int xWindow, yWindow, xPast, yPast;
 int angle, xRot, yRot, zRot;
 int type_of_draw, delay, state;
 long long index;
+int modeNormal;
 
 ////////////////
 // Model VARs //
 ////////////////
+
+struct myNormal {
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+};
 
 struct myVertex {
     GLdouble x;
@@ -27,7 +34,7 @@ struct myVertex {
 vector<Face> mod_faces;
 vector<Vertex> mod_vertices;
 vector<Normal> mod_normals;
-
+vector<Normal> mod_normals_vertices;
 
 myVertex model_center;
 
@@ -126,20 +133,28 @@ void drawModel() {
             defineModelMaterial(modmat);            
         }
         
-        // normal 
-        if (mod_faces[i].n.size() != 0) {            
-            int normal = mod_faces[i].n[0];
-            glNormal3f(mod_normals[normal], mod_normals[normal + 1], mod_normals[normal + 2]);     
+        
+        if (modeNormal == 0) {
+            // normal 
+            if (mod_faces[i].n.size() != 0) {            
+                int normal = mod_faces[i].n[0];
+                glNormal3f(mod_normals[normal], mod_normals[normal + 1], mod_normals[normal + 2]);     
+            }
+            else
+                glNormal3f(mod_faces[i].normalC[0], mod_faces[i].normalC[1], mod_faces[i].normalC[2]);                        
+            
+            for (int j = 0; j < mod_faces[i].v.size(); j++) {
+                int vertex = mod_faces[i].v[j];
+                glVertex3d(mod_vertices[vertex], mod_vertices[vertex + 1], mod_vertices[vertex + 2]);
+            }       
         }
-        else
-            glNormal3f(mod_faces[i].normalC[0], mod_faces[i].normalC[1], mod_faces[i].normalC[2]);
-                
-        // drawing vertices
-        for (int j = 0; j < mod_faces[i].v.size(); j++) {
-            int vertex = mod_faces[i].v[j];
-            glVertex3d(mod_vertices[vertex], mod_vertices[vertex + 1], mod_vertices[vertex + 2]);
-        }       
-
+        else {
+            for (int j = 0; j < mod_faces[i].v.size(); j++) {
+                int vertex = mod_faces[i].v[j];
+                glNormal3f(mod_normals_vertices[vertex],mod_normals_vertices[vertex+1],mod_normals_vertices[vertex+2]);
+                glVertex3d(mod_vertices[vertex], mod_vertices[vertex + 1], mod_vertices[vertex + 2]);
+            }       
+        }
         glEnd();    
     }
     
@@ -157,13 +172,13 @@ void initLights() {
     GLfloat light_specular[] = { 1.0, 1.0, 1.0, 1.0 };
     GLfloat light_position[] = { 0.0, 1.0, 1.0, 1.0 };
     
-    glLightfv (GL_LIGHT0, GL_AMBIENT, light_ambient);
-    glLightfv (GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-    glLightfv (GL_LIGHT0, GL_SPECULAR, light_specular);
-    glLightfv (GL_LIGHT0, GL_POSITION, light_position);
+    glLightfv (GL_LIGHT1, GL_AMBIENT, light_ambient);
+    glLightfv (GL_LIGHT1, GL_DIFFUSE, light_diffuse);
+    glLightfv (GL_LIGHT1, GL_SPECULAR, light_specular);
+    glLightfv (GL_LIGHT1, GL_POSITION, light_position);
 
     glEnable (GL_LIGHTING);
-    glEnable (GL_LIGHT0);    
+    glEnable (GL_LIGHT1);    
 }
 
 void switchOn(int light) {
@@ -260,6 +275,8 @@ void initGlut() {
 void initBuffers() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_NORMALIZE);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 }
 
 void initAngle() {
@@ -282,6 +299,17 @@ void initModel(string name) {
     mod_vertices = model.vertices();
     mod_faces    = model.faces();
     mod_normals  = model.normals();             
+    mod_normals_vertices.resize(mod_vertices.size());
+      
+    for (unsigned int i = 0; i < mod_faces.size(); ++i) {
+        for (int j = 0; j < mod_faces[i].v.size(); j++) {            
+            int vertex = mod_faces[i].v[j];            
+            mod_normals_vertices[vertex] += mod_normals[vertex];
+            mod_normals_vertices[vertex+1] += mod_normals[vertex+1];
+            mod_normals_vertices[vertex+2] += mod_normals[vertex+2];
+        }
+    }
+    cerr << "out" << endl;
     
     // model limits
     myVertex vertex_max;
@@ -302,12 +330,13 @@ void initModel(string name) {
     // scale until 1 diameter sphere
     mod_scale = 2/max(model_size.x, max(model_size.y, model_size.z));
     
+    modeNormal = 0;    
     cout << "Computing finished" << endl;    
 }
 
 void initTypeOfDraw() {
     type_of_draw = GL_FILL;
-    initModel("f-16.obj");
+    initModel("porsche.obj");
 }
 
 ///////////////
@@ -425,13 +454,18 @@ void onKey(unsigned char key, int x, int y) {
 	case 'c':
 	    if (switchLight == 0) {
 	      switchLight = 1;
-	      switchOn(GL_LIGHT0);
+	      switchOn(GL_LIGHT1);
 	    }
 	    else {
 	      switchLight = 0;
-	      switchOff(GL_LIGHT0);
+	      switchOff(GL_LIGHT1);
 	    }
 	    break;
+        
+    case 's':
+        if (modeNormal == 0) modeNormal = 1;
+        else modeNormal = 0;
+        break;
                     
     }    
     glutPostRedisplay();
@@ -455,13 +489,13 @@ void renderScene() {
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);        
     
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix(); 
-        defineShiniMaterial(0.0, 0.0, 1.0);
-        drawFloor();     
-        
-    glPopMatrix();
-        
+    glMatrixMode(GL_MODELVIEW);        
+    
+    GLfloat position[] = { 70.0, -1.0, 70, 1.0 };
+    glLightfv (GL_LIGHT1, GL_POSITION, position);
+    defineShiniMaterial(0.0, 0.0, 1.0);    
+    drawFloor();     
+    
     glPushMatrix();        
         // Prepare model drawing
         glMatrixMode(GL_MODELVIEW);        
@@ -470,8 +504,7 @@ void renderScene() {
     glPopMatrix();
 
     defineShiniMaterial(0.0, 1.0, 0.0);
-        
-     //Dibuja la esfera de radio 2.5    
+             
     glPushMatrix ();
     glTranslatef (-1.0, 1.0, 0.0); 
     glutSolidSphere (1.0, 16, 16);
