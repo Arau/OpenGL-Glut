@@ -1,5 +1,5 @@
 #include <GL/gl.h>
-#include <GL/glut.h>
+#include <glut.h>
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -32,7 +32,6 @@ vector<Normal> mod_normals;
 myVertex model_center;
 
 double mod_scale;
-int modmat;
 
 GLdouble m[16];
 
@@ -91,19 +90,24 @@ void getLimitVertex(myVertex &min, myVertex &max) {
 // Drawing  //
 //////////////
 
-void drawFloor() {              
-    glColor3f(1, 0, 0);
+void drawFloor() {                      
     glBegin(GL_LINES);
         for (int i = -70; i <= 70; ++i) {
-            glVertex3i(i, -1, 70);  // vertical lines
+            glVertex3i(i, -1,  70);  // vertical lines
             glVertex3i(i, -1, -70);
             
             glVertex3i(-70, -1, i); // horizontal lines
-            glVertex3i(70, -1, i);
-        }
+            glVertex3i( 70, -1, i);
+        }        
 
-    glEnd();
-    glColor3f(1, 1, 1);   
+    glEnd();    
+}
+
+void defineModelMaterial(int modmat) {
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, Materials[modmat].ambient);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, Materials[modmat].diffuse);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, Materials[modmat].specular);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, Materials[modmat].shininess);
 }
 
 void drawModel() {
@@ -112,23 +116,20 @@ void drawModel() {
     glScaled(mod_scale, mod_scale, mod_scale);    
     glTranslated(-model_center.x, -model_center.y, -model_center.z);    
     
+    int modmat;
     for (int i = 0; i < mod_faces.size(); i++) {
         glPolygonMode(GL_FRONT_AND_BACK, type_of_draw);
         glBegin(GL_POLYGON);
         
         if (modmat != mod_faces[i].mat) {
-            modmat = mod_faces[i].mat; 
-	    
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, Materials[modmat].ambient);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, Materials[modmat].diffuse);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, Materials[modmat].specular);
-            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, Materials[modmat].shininess);
-	}
+            modmat = mod_faces[i].mat; 	            
+            defineModelMaterial(modmat);            
+        }
         
         // normal 
-        if (mod_faces[i].n.size() != 0) {
+        if (mod_faces[i].n.size() != 0) {            
             int normal = mod_faces[i].n[0];
-            glNormal3f(mod_normals[normal], mod_normals[normal + 1], mod_normals[normal + 2]);
+            glNormal3f(mod_normals[normal], mod_normals[normal + 1], mod_normals[normal + 2]);     
         }
         else
             glNormal3f(mod_faces[i].normalC[0], mod_faces[i].normalC[1], mod_faces[i].normalC[2]);
@@ -150,9 +151,19 @@ void drawModel() {
 /////////////
 
 void initLights() {
-  switchLight = 1;
-  glEnable(GL_LIGHTING);
-  glEnable(GL_LIGHT0);
+    switchLight = 1;
+    GLfloat light_ambient[]  = { 0.75, 0.75, 0.75, 1.0 };
+    GLfloat light_diffuse[]  = { 1.0, 1.0, 1.0, 1.0 };
+    GLfloat light_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+    GLfloat light_position[] = { 0.0, 1.0, 1.0, 1.0 };
+    
+    glLightfv (GL_LIGHT0, GL_AMBIENT, light_ambient);
+    glLightfv (GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+    glLightfv (GL_LIGHT0, GL_SPECULAR, light_specular);
+    glLightfv (GL_LIGHT0, GL_POSITION, light_position);
+
+    glEnable (GL_LIGHTING);
+    glEnable (GL_LIGHT0);    
 }
 
 void switchOn(int light) {
@@ -161,6 +172,17 @@ void switchOn(int light) {
 
 void switchOff(int light) {  
   glDisable(light);	
+}
+
+void defineShiniMaterial(float R, float G, float B) {
+    GLfloat ambient[]  = {0.1, 0.1, 0.1, 1.0f};     
+    GLfloat specular[] = {0.9, 0.9, 0.9, 1.0f};
+    GLfloat diffuse[]  = {R, G, B, 1.0f};
+    
+    glMaterialfv (GL_FRONT, GL_AMBIENT, ambient);
+    glMaterialfv (GL_FRONT, GL_DIFFUSE, diffuse);
+    glMaterialfv (GL_FRONT, GL_SPECULAR, specular);
+    glMaterialf (GL_FRONT, GL_SHININESS, 100.0f);
 }
 
 /////////////
@@ -237,6 +259,7 @@ void initGlut() {
 
 void initBuffers() {
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_NORMALIZE);
 }
 
 void initAngle() {
@@ -284,7 +307,7 @@ void initModel(string name) {
 
 void initTypeOfDraw() {
     type_of_draw = GL_FILL;
-    initModel("legoman-assegut.obj");
+    initModel("f-16.obj");
 }
 
 ///////////////
@@ -433,8 +456,10 @@ void renderScene() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);        
     
     glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();        
-        drawFloor(); 
+    glPushMatrix(); 
+        defineShiniMaterial(0.0, 0.0, 1.0);
+        drawFloor();     
+        
     glPopMatrix();
         
     glPushMatrix();        
@@ -444,7 +469,15 @@ void renderScene() {
         drawModel();                            
     glPopMatrix();
 
+    defineShiniMaterial(0.0, 1.0, 0.0);
         
+     //Dibuja la esfera de radio 2.5    
+    glPushMatrix ();
+    glTranslatef (-1.0, 1.0, 0.0); 
+    glutSolidSphere (1.0, 16, 16);
+    glPopMatrix ();
+    
+    
     glutSwapBuffers();
 }
 
