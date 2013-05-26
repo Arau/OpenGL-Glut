@@ -44,10 +44,13 @@ GLdouble m[16];
 
 Model model;
 
+vector<myVertex> corners(4);
+int cornerIndex;
 
 ////////////
 // Camera //
 ////////////
+
 myVertex obs, vrp, up;
 double aspect;
 double fovy;
@@ -62,8 +65,8 @@ int xMove, yMove, zMove;
 // Lights //
 ////////////
 
-int switchLight;
-
+int switchLight[] = { 1, 0, 0 };
+GLfloat pos_light2[3];
 
 //////////////
 // Utils    //
@@ -108,6 +111,7 @@ void drawFloor() {
         }        
 
     glEnd();    
+                    
 }
 
 void defineModelMaterial(int modmat) {
@@ -165,28 +169,69 @@ void drawModel() {
 //  Lights //
 /////////////
 
-void initLights() {
-    switchLight = 1;
-    GLfloat light_ambient[]  = { 0.75, 0.75, 0.75, 1.0 };
-    GLfloat light_diffuse[]  = { 1.0, 1.0, 1.0, 1.0 };
-    GLfloat light_specular[] = { 1.0, 1.0, 1.0, 1.0 };
-    GLfloat light_position[] = { 0.0, 1.0, 1.0, 1.0 };
-    
-    glLightfv (GL_LIGHT1, GL_AMBIENT, light_ambient);
-    glLightfv (GL_LIGHT1, GL_DIFFUSE, light_diffuse);
-    glLightfv (GL_LIGHT1, GL_SPECULAR, light_specular);
-    glLightfv (GL_LIGHT1, GL_POSITION, light_position);
+void updateLightPos() {
+    pos_light2[0] = corners[cornerIndex].x;
+    pos_light2[1] = corners[cornerIndex].y;    
+    pos_light2[2] = corners[cornerIndex].z;                
+}
 
-    glEnable (GL_LIGHTING);
-    glEnable (GL_LIGHT1);    
+void moveLight() {        
+    ++cornerIndex;
+    if (cornerIndex == 4) 
+        cornerIndex = 0;        
+    
+    updateLightPos();    
 }
 
 void switchOn(int light) {
-  glEnable(light);
+    int gLight = 0;
+    if (light == 0) gLight = GL_LIGHT0;
+    else if (light == 1) gLight = GL_LIGHT1;
+    else if (light == 2) gLight = GL_LIGHT2;
+    
+    glEnable(gLight);
 }
 
 void switchOff(int light) {  
-  glDisable(light);	
+    int gLight = 0;
+    if (light == 0) gLight = GL_LIGHT0;
+    else if (light == 1) gLight = GL_LIGHT1;
+    else if (light == 2) gLight = GL_LIGHT2;
+    
+    glDisable(gLight);  
+}
+
+void switchingLight(int light) {
+    if (switchLight[light] == 0) {
+          switchLight[light] = 1;
+          switchOn(light);
+    }
+    else {
+        switchLight[light] = 0;
+        switchOff(light);
+    }
+}
+
+
+void defineLight(int light, float colors[]) {
+    
+    GLfloat light_ambient[]  = { colors[0], colors[1], colors[2], 1.0 };
+    GLfloat light_diffuse[]  = { 1.0, 1.0, 1.0, 1.0 };
+    GLfloat light_specular[] = { 1.0, 1.0, 1.0, 1.0 };    
+    
+    glLightfv (light, GL_AMBIENT, light_ambient);
+    glLightfv (light, GL_DIFFUSE, light_diffuse);
+    glLightfv (light, GL_SPECULAR, light_specular);    
+}
+
+
+void initLights() {         
+    glEnable (GL_LIGHTING);
+    glEnable (GL_LIGHT0); 
+    float colors[] = { 0.75, 0.75, 0.75 };
+    defineLight(GL_LIGHT1, colors);
+    defineLight(GL_LIGHT2, colors);
+    
 }
 
 void defineShiniMaterial(float R, float G, float B) {
@@ -308,8 +353,7 @@ void initModel(string name) {
             mod_normals_vertices[vertex+1] += mod_normals[vertex+1];
             mod_normals_vertices[vertex+2] += mod_normals[vertex+2];
         }
-    }
-    cerr << "out" << endl;
+    }    
     
     // model limits
     myVertex vertex_max;
@@ -339,6 +383,27 @@ void initTypeOfDraw() {
     initModel("porsche.obj");
 }
 
+void initCorners() {    
+    
+    corners[0].x = -70;
+    corners[0].y =  -1;
+    corners[0].z =  70;    
+    
+    corners[1].x = -70;
+    corners[1].y =  -1;
+    corners[1].z = -70;
+    
+    corners[2].x =  70;
+    corners[2].y =  -1;
+    corners[2].z = -70;
+    
+    corners[3].x =  70;
+    corners[3].y =  -1;
+    corners[3].z =  70; 
+    
+    cornerIndex = 0;
+}
+
 ///////////////
 // Callbacks //
 ///////////////
@@ -350,29 +415,32 @@ void onKey(unsigned char key, int x, int y) {
             cout << "press t to change draw type"      << endl;
             cout << endl;
             
-            cout << "If Euler mode: \n" << endl;
-            cout << "\tpress 1 to move X respect, hourly "    << endl;
-            cout << "\tpress 3 to move X respect, (-)hourly " << endl;
+            cout << "Entrega:" << endl;
+            cout << "\t press 'c' to Switch On/Off light 0" << endl;
+            cout << "\t press 'f' to Switch On/Off light 2" << endl;
+            cout << "\t press 's' to Move light between floor corners" << endl;
+            
+            cout << "Lights: \n" << endl;
+            cout << "\t press 'c' to Switch On/Off light 0" << endl;
+            cout << "\t press 'v' to Switch On/Off light 1" << endl;
+            cout << "\t press 'f' to Switch On/Off light 2" << endl;
+            cout << "\t press 's' to Move light between floor corners" << endl;
+            cout << "\t press 'z' to Switch Normal style Face/Vertice" << endl;
+            
+            cout << "Move Camera: \n" << endl;
+            cout << "\tpress 'q' to move respect Y axe, hourly "    << endl;
+            cout << "\tpress 'r' to move respect Y axe, (-)hourly " << endl;
             cout << endl;
-            cout << "\tpress 2 to move Y respect, hourly"     << endl;
-            cout << "\tpress 4 to move Y respect, (-)hourly" << endl;
+            cout << "\tpress 'w' to move respect (model) Z axe, hourly"     << endl;
+            cout << "\tpress 'e' to move respect (model) Z axe, (-)hourly" << endl;
             cout << endl;
-            cout << "\tpress 5 to move Z respect, hourly "    << endl;
-            cout << "\tpress 6 to move Z respect, (-)hourly " << endl;
             
             break;
             
         case 27:        // ascii 27 == ESC
             exit(0); 
             break;                    
-        
-	case 't':
-            if (type_of_draw == GL_FILL)
-                type_of_draw = GL_LINE;
-            else 
-                type_of_draw = GL_FILL;
-            break;          
-                               
+        	                           
         case 'p':
             definePersCam();
             break;
@@ -382,7 +450,7 @@ void onKey(unsigned char key, int x, int y) {
             definePersCam();    
             break;
             
-        case 'f':                        
+        case 'b':                        
             fovy += 3;
             definePersCam();            
             break;                    
@@ -421,7 +489,7 @@ void onKey(unsigned char key, int x, int y) {
             break;
           
         case '4':
-	  if (camAngleX < 0) 
+            if (camAngleX < 0) 
                 camAngleX = 0;
             
             camAngleX += 1;
@@ -452,17 +520,23 @@ void onKey(unsigned char key, int x, int y) {
 	    break;
 	    
 	case 'c':
-	    if (switchLight == 0) {
-	      switchLight = 1;
-	      switchOn(GL_LIGHT1);
-	    }
-	    else {
-	      switchLight = 0;
-	      switchOff(GL_LIGHT1);
-	    }
+        switchingLight(0); //Light 0	    
 	    break;
         
+    case 'v':
+        switchingLight(1); //Light 1       
+        break;
+        
+    case 'f':  
+        updateLightPos();
+        switchingLight(2); //Light 2       
+        break;
+        
     case 's':
+        moveLight();
+        break;        
+        
+    case 'z':
         if (modeNormal == 0) modeNormal = 1;
         else modeNormal = 0;
         break;
@@ -491,8 +565,14 @@ void renderScene() {
     
     glMatrixMode(GL_MODELVIEW);        
     
-    GLfloat position[] = { 70.0, -1.0, 70, 1.0 };
-    glLightfv (GL_LIGHT1, GL_POSITION, position);
+    if (switchLight[1] != 0) {
+        GLfloat pos_light1[] = { 30.0, 6.0, 0.0, 1.0 };
+        glLightfv (GL_LIGHT1, GL_POSITION, pos_light1);        
+    }
+    if (switchLight[2] != 0) {        
+        glLightfv (GL_LIGHT2, GL_POSITION, pos_light2);    
+    }
+        
     defineShiniMaterial(0.0, 0.0, 1.0);    
     drawFloor();     
     
@@ -502,15 +582,7 @@ void renderScene() {
         glGetDoublev(GL_MODELVIEW_MATRIX, m);               
         drawModel();                            
     glPopMatrix();
-
-    defineShiniMaterial(0.0, 1.0, 0.0);
-             
-    glPushMatrix ();
-    glTranslatef (-1.0, 1.0, 0.0); 
-    glutSolidSphere (1.0, 16, 16);
-    glPopMatrix ();
-    
-    
+        
     glutSwapBuffers();
 }
 
@@ -525,7 +597,8 @@ int main(int argc, char **argv) {
     initGlut();    
     initBuffers();
     initAngle();    
-    initTypeOfDraw();    
+    initTypeOfDraw();  
+    initCorners();
     initCamera();
     initLights();
     
